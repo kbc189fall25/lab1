@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vocabulary Match Quiz</title>
+<style>
+:root{--bg:#f7f5f0;--surface:#fff;--text:#1f2430;--muted:#6a7080;--border:#d9d5cb;--accent:#2f6fed;--accent-bg:#e6eeff;--ok:#1d8a4e;--ok-bg:#dff3e6;--bad:#c0392b;--bad-bg:#fbe2df;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#15171c;--surface:#1f232b;--text:#eceef3;--muted:#9aa1b0;--border:#363c48;--accent:#7aa2ff;--accent-bg:#26324f;--ok:#5fd08a;--ok-bg:#1d3a2a;--bad:#ff8a7d;--bad-bg:#432622}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#15171c;--surface:#1f232b;--text:#eceef3;--muted:#9aa1b0;--border:#363c48;--accent:#7aa2ff;--accent-bg:#26324f;--ok:#5fd08a;--ok-bg:#1d3a2a;--bad:#ff8a7d;--bad-bg:#432622}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:960px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:0 0 4px}
+p.sub{color:var(--muted);margin:0 0 16px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.score{font-weight:600}
+button.reset{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+.cols{display:grid;grid-template-columns:200px 1fr;gap:16px}
+@media (max-width:640px){.cols{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:8px}
+.col h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0}
+.item{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:10px 12px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.term{font-weight:600}
+.item:hover:not(:disabled){border-color:var(--accent)}
+.item.sel{border-color:var(--accent);background:var(--accent-bg)}
+.item.ok{border-color:var(--ok);background:var(--ok-bg);cursor:default}
+.item.bad{border-color:var(--bad);background:var(--bad-bg)}
+.done{display:none;margin-top:18px;padding:14px;border-radius:10px;background:var(--ok-bg);border:2px solid var(--ok);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>Vocabulary Match Quiz</h1>
+<p class="sub">Click a word, then click its matching definition.</p>
+<div class="bar"><div class="score" id="score">Matched: 0 / 12 · Mistakes: 0</div><button class="reset" id="reset">Shuffle &amp; restart</button></div>
+<div class="cols">
+<div class="col"><h2>Words</h2><div class="col" id="terms"></div></div>
+<div class="col"><h2>Definitions</h2><div class="col" id="defs"></div></div>
+</div>
+<div class="done" id="done"></div>
+</main>
+<script>
+var DATA=[
+["cope with","to manage a difficult problem or situation"],
+["prevent","to stop something from happening"],
+["reduce","to make something smaller or less"],
+["relax","to spend time resting or doing something you enjoy"],
+["make time","to make a plan so you have time for something"],
+["meditate","to empty your mind of thoughts and feelings so you can relax completely"],
+["pray","to talk to God or another higher being"],
+["limit","to stop an amount or number from getting bigger"],
+["alcohol","drinks such as beer or wine that contain a substance which can make you drunk"],
+["tobacco","the dried brown leaves that are smoked in cigarettes"],
+["hobby","an activity that a person enjoys doing"],
+["strategy","a way or a plan for doing something"]
+];
+var sel=null,matched=0,mistakes=0;
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function build(){
+  sel=null;matched=0;mistakes=0;
+  document.getElementById('done').style.display='none';
+  var t=document.getElementById('terms'),d=document.getElementById('defs');
+  t.innerHTML='';d.innerHTML='';
+  shuffle(DATA.map(function(_,i){return i})).forEach(function(i){
+    var b=document.createElement('button');b.className='item term';b.textContent=DATA[i][0];b.dataset.i=i;b.onclick=function(){pickTerm(b)};t.appendChild(b)});
+  shuffle(DATA.map(function(_,i){return i})).forEach(function(i){
+    var b=document.createElement('button');b.className='item';b.textContent=DATA[i][1];b.dataset.i=i;b.onclick=function(){pickDef(b)};d.appendChild(b)});
+  update();
+}
+function update(){document.getElementById('score').textContent='Matched: '+matched+' / 12 · Mistakes: '+mistakes}
+function pickTerm(b){
+  if(b.classList.contains('ok'))return;
+  if(sel)sel.classList.remove('sel');
+  sel=b;b.classList.add('sel');
+}
+function pickDef(b){
+  if(!sel||b.classList.contains('ok'))return;
+  if(sel.dataset.i===b.dataset.i){
+    sel.classList.remove('sel');sel.classList.add('ok');b.classList.add('ok');
+    sel=null;matched++;update();
+    if(matched===12){var m=document.getElementById('done');m.style.display='block';
+      m.textContent=mistakes===0?'Perfect! All 12 matched with no mistakes. 🎉':'Well done! All 12 matched with '+mistakes+' mistake'+(mistakes===1?'':'s')+'. Try again for a perfect score!'}
+  }else{
+    mistakes++;update();b.classList.add('bad');
+    setTimeout(function(){b.classList.remove('bad')},600);
+  }
+}
+document.getElementById('reset').onclick=build;
+build();
+</script>
+</body>
+</html>
